@@ -1,0 +1,36 @@
+[project]
+name = "dotfiler"
+description = "A program to install and maintain files in a home directory, such as dotfiles and other configuration."
+readme = "README.md"
+authors = [
+    { name = "Matthew Pounsett", email = "matt@conundrum.com" }
+]
+requires-python = ">=3.12"
+dependencies = []
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+classifiers = [
+    'Development Status :: 2 - Pre-Alpha',
+    'Environment :: Console',
+    'Intended Audience :: End Users/Desktop',
+    'Natural Language :: English',
+    'Operating System :: POSIX',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
+    'Topic :: Desktop Environment',
+    'Topic :: Utilities',
+]
+dynamic = ["version"]
+
+[project.scripts]
+dotfiler = "dotfiler.main:cli"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "dotfiler.version.__version__"}
