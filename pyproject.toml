@@ -34,3 +34,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
 version = {attr = "dotfiler.version.__version__"}
+
+[dependency-groups]
+docs = [
+    "zensical>=0.0.51",
+]

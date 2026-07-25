@@ -6,6 +6,9 @@ dist/
 wheels/
 *.egg-info
 
+# Documentation artifacts
+site/
+
 # Virtual environments
 .venv
 
@@ -13,5 +16,6 @@ wheels/
 *.conf
 *.toml
 !pyproject.toml
+!zensical.toml
 *.db
 tmp/

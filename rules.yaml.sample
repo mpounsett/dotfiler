@@ -1,0 +1,144 @@
+# Sample configuration rules for dotfiler.
+#
+# Top level:
+#   tasks    - files and directories to install
+#   packages - system packages, per package manager
+#   config   - application settings
+#
+# The full grammar reference is in docs/grammar.md.
+---
+tasks:
+  # The simplest task: symlink ~/.zshrc to <rules dir>/zsh/zshrc.  Source
+  # paths are relative to the directory containing the rules file.
+  # `action: symlink` is the default.
+  - target: ~/.zshrc
+    source: zsh/zshrc
+
+  - target: ~/.vimrc
+    source: vim/vimrc
+
+  # Recursive install: recreate the directory tree from source under target,
+  # and install each file it contains according to `action`.  Missing parent
+  # directories are always created, recursive or not.
+  - target: ~/.vim
+    source: vim/vim
+    recurse: true
+
+  # Hardlink, for applications that refuse to follow symlinks.  `exclude`
+  # globs (relative to source, recursive tasks only) are never installed.
+  - target: ~/.config/myapp
+    source: myapp
+    action: hardlink
+    recurse: true
+    exclude:
+      - "*.tmp"
+
+  # The ciphertext mutt/aliases.gpg is NOT symlinked into this tree: any
+  # path claimed as another task's source (here, by the decrypt task below)
+  # is skipped automatically during recursive expansion.
+  - target: ~/.mutt
+    source: mutt
+    recurse: true
+
+  - target: ~/.claude
+    source: claude
+    recurse: true
+
+  # A more specific task overrides a recursive task for that path: the mutt
+  # tree above skips `aliases`, and this task installs it instead.  `decrypt`
+  # sources are GPG ciphertext, decrypted to a plain file at the target
+  # (mode 0600 unless `mode` says otherwise).
+  - target: ~/.mutt/aliases
+    source: mutt/aliases.gpg
+    action: decrypt
+
+  # Note: a hardlink shares the source's inode, so this mode also applies
+  # to the repository copy of login_conf -- intentional for a secure file.
+  - target: ~/.login_conf
+    source: login_conf
+    action: hardlink
+    mode: "0600"
+
+  # Create-once: copied when missing, never updated afterwards.  Once the
+  # target exists the task no longer matches.
+  - target: ~/.config/git/coderabbit
+    source: git/coderabbit
+    action: copy
+    match:
+      exists: false
+
+  # Retire a file previously installed here: declare it absent.  Removal is
+  # idempotent (already absent = done).  A target that is a link into this
+  # repository is removed silently; anything else prompts per on_conflict.
+  - target: ~/.oldapprc
+    action: remove
+    match:
+      os: darwin
+
+  # Retire a whole previously-installed tree.  The source -- which must stay
+  # in the repository while this rule is active -- defines what to remove.
+  # Removal runs deepest-first and deletes a directory only once it is
+  # empty, so foreign files in the tree survive along with their parent
+  # directories.
+  - target: ~/.oldapp
+    source: oldapp
+    action: remove
+    recurse: true
+
+  # Only install where the ipython command is available.  `executable`
+  # accepts a bare command name (searched for in PATH) or an absolute path;
+  # a relative path is ambiguous, and therefore a config error.
+  - target: ~/.ipython/profile_default/ipython_config.py
+    source: ipython_config.py
+    match:
+      executable: ipython
+
+  # Match rules within one block are ANDed.  A rule value is a scalar
+  # (equals), a list (any-of), or a mapping with `not:` (none-of).  These
+  # two tasks install different sources to the same target depending on the
+  # host's domain; their complementary match rules keep them from ever
+  # conflicting.
+  - target: ~/.aptrc
+    source: apt/aptrc.example
+    match:
+      os: [debian, ubuntu]
+      domain: example.com
+
+  - target: ~/.aptrc
+    source: apt/aptrc
+    match:
+      os: [debian, ubuntu]
+      domain:
+        not: example.com
+
+# System packages.  Each entry pairs a match block with one or more package
+# manager keys.  `os` values match the host's fact set built from the kernel
+# and the os-release ID: distro names match only themselves, `linux` matches
+# any Linux, and related distros are grouped by listing them.
+packages:
+  - match:
+      os: darwin
+    brew:
+      - bat
+      - git
+      - ispell
+      - mtr
+      - wget
+
+  - match:
+      os: [debian, ubuntu]
+      domain: example.net
+    apt:
+      - minicom
+
+  - match:
+      os: [debian, ubuntu]
+    apt:
+      - bat
+      - zsh
+      - mtr
+
+config:
+  # What to do when a target exists but is not what the task would install
+  # (e.g. a real file where a symlink belongs): ask | replace | skip.
+  on_conflict: ask
