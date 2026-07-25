@@ -6,10 +6,10 @@ dist/
 wheels/
 *.egg-info
 
-# Documentation artifacts
+# Build Artifacts
 site/
 
-# Virtual environments
+# Virtual Environments
 .venv
 
 # Local files
@@ -19,3 +19,6 @@ site/
 !zensical.toml
 *.db
 tmp/
+
+# Testing Artifacts
+.coverage

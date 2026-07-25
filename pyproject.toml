@@ -36,6 +36,104 @@ build-backend = "setuptools.build_meta"
 version = {attr = "dotfiler.version.__version__"}
 
 [dependency-groups]
-docs = [
-    "zensical>=0.0.51",
+dev = [
+    "tox",
+    "tox-uv",
+    {include-group = "docs"},
+    {include-group = "lint"},
+    {include-group = "security"},
+    {include-group = "test"},
+
 ]
+docs = [
+    "zensical~=0.0.51",
+]
+lint = [
+    "isort",
+    "ruff",
+]
+security = [
+    "bandit[toml]",
+    "pip-audit",
+]
+test = [
+    "pytest>=9.0.3",
+    "pytest-cov",
+]
+
+[tool.tox]
+requires = ["tox-uv"]
+envlist = [
+    "clean",
+    "bandit", "pip-audit", "ruff",
+    "py312", "py313", "py314",
+    "stats"
+]
+skip_missing_interpreters = false
+
+[tool.tox.env_run_base]
+description = "run unit tests"
+runner = "uv-venv-lock-runner"
+commands = [
+    [
+        "pytest",
+        "--cov=src/dotfiler",
+        "--cov-report=html",
+        "--cov-append",
+        {replace = "posargs", default = ["tests"], extend = true}
+    ]
+]
+dependency_groups = ["test"]
+
+[tool.tox.env.bandit]
+# bandit's baseline matching includes the reported filename, and the path for
+# each file can differ by invocation.  We can't control all of the invocations
+# (for example, pre-commit) so be careful about how you pass paths to it.
+description = "run bandit security scan"
+commands = [["bandit", "-c", "pyproject.toml",
+    "-b", ".github/security/bandit-baseline.json",
+    "-r", "./src/dotfiler", "./tests", "-q" ]]
+dependency_groups = ["security"]
+ignore_errors = true
+
+[tool.tox.env.ruff]
+description = "run ruff"
+commands = [["ruff", "check", "src/dotfiler", "tests"]]
+dependency_groups = ["lint"]
+ignore_errors = true
+
+[tool.tox.env.pip-audit]
+description = "run pip-audit"
+commands = [["pip-audit", "--skip-editable"]]
+dependency_groups = ["security"]
+ignore_errors = true
+
+[tool.tox.env.clean]
+description = "clean coverage data"
+commands = [["coverage", "erase"]]
+dependency_groups = ["test"]
+skip_install = true
+
+[tool.tox.env.stats]
+description = "generate coverage report"
+commands = [
+    ["coverage", "report"],
+    ["coverage", "html"]
+]
+
+[tool.isort]
+line_length = 100
+
+[tool.ruff]
+line-length = 100
+respect-gitignore = true
+
+[tool.ruff.lint]
+extend-select = ["E", "F", "W", "E501",]
+ignore = []
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
+[tool.bandit.assert_used]
+skips = ['tests/test_*.py', './tests/test_*.py']
