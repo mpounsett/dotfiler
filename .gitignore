@@ -17,6 +17,7 @@ site/
 *.toml
 !pyproject.toml
 !zensical.toml
+!rules-sample.yaml
 *.db
 tmp/
 
