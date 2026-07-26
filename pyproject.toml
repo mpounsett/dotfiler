@@ -38,6 +38,7 @@ version = {attr = "dotfiler.version.__version__"}
 
 [dependency-groups]
 dev = [
+    "pre-commit",
     "tox",
     "tox-uv",
     {include-group = "docs"},
